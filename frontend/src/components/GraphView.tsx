@@ -31,19 +31,80 @@ const getStatusGlow = (status: number | null) => {
   return 'rgba(248, 113, 113, 0.2)'
 }
 
+function buildTreeLayout(data: GraphData) {
+  const NODE_W = 160
+  const LEVEL_GAP = 120
+  const NODE_GAP = 20
+
+  const children: Record<string, string[]> = {}
+  const childSet = new Set<string>()
+  for (const edge of data.edges) {
+    if (!children[edge.source]) children[edge.source] = []
+    children[edge.source].push(edge.target)
+    childSet.add(edge.target)
+  }
+
+  let rootId = data.nodes[0]?.id
+  for (const node of data.nodes) {
+    if (!childSet.has(node.id)) {
+      rootId = node.id
+      break
+    }
+  }
+
+  const levels: string[][] = []
+  const visited = new Set<string>()
+  const queue: { id: string; depth: number }[] = [{ id: rootId!, depth: 0 }]
+
+  while (queue.length > 0) {
+    const { id, depth } = queue.shift()!
+    if (visited.has(id)) continue
+    visited.add(id)
+    if (!levels[depth]) levels[depth] = []
+    levels[depth].push(id)
+    for (const child of (children[id] || [])) {
+      if (!visited.has(child)) {
+        queue.push({ id: child, depth: depth + 1 })
+      }
+    }
+  }
+
+  for (const node of data.nodes) {
+    if (!visited.has(node.id)) {
+      const d = node.depth || 0
+      if (!levels[d]) levels[d] = []
+      levels[d].push(node.id)
+      visited.add(node.id)
+    }
+  }
+
+  const positions: Record<string, { x: number; y: number }> = {}
+  for (let d = 0; d < levels.length; d++) {
+    const nodes = levels[d]
+    const totalWidth = nodes.length * (NODE_W + NODE_GAP) - NODE_GAP
+    const startX = -totalWidth / 2
+    for (let i = 0; i < nodes.length; i++) {
+      positions[nodes[i]] = {
+        x: startX + i * (NODE_W + NODE_GAP),
+        y: d * LEVEL_GAP,
+      }
+    }
+  }
+
+  return positions
+}
+
 export default function GraphView({ data }: GraphViewProps) {
+  const positions = useMemo(() => buildTreeLayout(data), [data])
+
   const initialNodes: Node[] = useMemo(() => {
-    return data.nodes.map((node, index) => {
-      const angle = (index / data.nodes.length) * 2 * Math.PI
-      const radius = Math.min(350, data.nodes.length * 12)
+    return data.nodes.map((node) => {
+      const pos = positions[node.id] || { x: 0, y: 0 }
       const color = getStatusColor(node.status_code)
       const glow = getStatusGlow(node.status_code)
       return {
         id: node.id,
-        position: {
-          x: 400 + radius * Math.cos(angle),
-          y: 300 + radius * Math.sin(angle),
-        },
+        position: { x: pos.x, y: pos.y },
         data: {
           label: (
             <div
@@ -80,7 +141,7 @@ export default function GraphView({ data }: GraphViewProps) {
         },
       }
     })
-  }, [data.nodes])
+  }, [data.nodes, positions])
 
   const initialEdges: Edge[] = useMemo(() => {
     return data.edges.map((edge) => ({
