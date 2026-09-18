@@ -4,8 +4,8 @@ import { api } from '../api'
 
 export default function HomePage() {
   const [url, setUrl] = useState('')
-  const [maxPages, setMaxPages] = useState(1000)
-  const [maxDepth, setMaxDepth] = useState(5)
+  const [maxPages, setMaxPages] = useState(50)
+  const [maxDepth, setMaxDepth] = useState(3)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const navigate = useNavigate()
