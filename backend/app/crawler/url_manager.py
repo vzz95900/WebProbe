@@ -26,15 +26,9 @@ def normalize_url(url: str, base_url: str = None) -> str | None:
     if not path:
         path = "/"
 
-    fragment = ""
-    if parsed.fragment:
-        fragment = f"#{parsed.fragment}"
-
-    query = ""
+    normalized = f"{scheme}://{netloc}{path}"
     if parsed.query:
-        query = f"?{parsed.query}"
-
-    normalized = f"{scheme}://{netloc}{path}{query}{fragment}"
+        normalized += f"?{parsed.query}"
     return normalized
 
 

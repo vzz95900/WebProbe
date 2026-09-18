@@ -149,11 +149,12 @@ async def get_errors(crawl_id: str, db: AsyncSession = Depends(get_session)):
     errors = await crud.get_errors(db, crawl_id)
     return [
         ErrorResponse(
-            id=e.id,
-            url=e.url,
-            error_type=e.error_type,
-            message=e.message,
-            retry_count=e.retry_count,
+            id=e["id"],
+            url=e["url"],
+            error_type=e["error_type"],
+            message=e["message"],
+            retry_count=e["retry_count"],
+            status_code=e.get("status_code"),
         )
         for e in errors
     ]

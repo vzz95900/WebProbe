@@ -19,6 +19,8 @@ async def save_crawl_result(db: AsyncSession, crawl_id: str, crawl_data: dict):
     )
     db.add(crawl)
 
+    url_to_page_id: dict[str, int] = {}
+
     for result in crawl_data["results"]:
         page = PageModel(
             crawl_id=crawl_id,
@@ -33,24 +35,16 @@ async def save_crawl_result(db: AsyncSession, crawl_id: str, crawl_data: dict):
         )
         db.add(page)
         await db.flush()
+        url_to_page_id[result["url"]] = page.id
 
-        if result.get("parent_url"):
-            parent_result = next(
-                (
-                    r
-                    for r in crawl_data["results"]
-                    if r["url"] == result["parent_url"]
-                ),
-                None,
+        if result.get("parent_url") and result["parent_url"] in url_to_page_id:
+            link = LinkModel(
+                crawl_id=crawl_id,
+                source_page_id=url_to_page_id[result["parent_url"]],
+                target_url=result["url"],
+                is_internal=True,
             )
-            if parent_result:
-                link = LinkModel(
-                    crawl_id=crawl_id,
-                    source_page_id=page.id,
-                    target_url=result["url"],
-                    is_internal=True,
-                )
-                db.add(link)
+            db.add(link)
 
         if result.get("error"):
             error = ErrorModel(
@@ -81,7 +75,7 @@ async def get_pages(
     db: AsyncSession, crawl_id: str, status_filter: int | None = None
 ) -> list[PageModel]:
     query = select(PageModel).where(PageModel.crawl_id == crawl_id)
-    if status_filter:
+    if status_filter is not None:
         query = query.where(PageModel.status_code == status_filter)
     query = query.order_by(PageModel.depth, PageModel.url)
     result = await db.execute(query)

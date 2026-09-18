@@ -16,13 +16,17 @@ def parse_html(html: str, base_url: str) -> ParseResult:
 
     title = None
     title_tag = soup.find("title")
-    if title_tag and title_tag.string:
-        title = title_tag.string.strip()
+    if title_tag:
+        text = title_tag.get_text(strip=True)
+        if text:
+            title = text
 
     h1 = None
     h1_tag = soup.find("h1")
-    if h1_tag and h1_tag.string:
-        h1 = h1_tag.string.strip()
+    if h1_tag:
+        text = h1_tag.get_text(strip=True)
+        if text:
+            h1 = text
 
     base_domain = urlparse(base_url).netloc.lower()
     internal_links = []
@@ -30,7 +34,7 @@ def parse_html(html: str, base_url: str) -> ParseResult:
 
     for tag in soup.find_all("a", href=True):
         href = tag["href"].strip()
-        if not href or href.startswith(("#", "javascript:", "mailto:", "tel:")):
+        if not href or href.lower().startswith(("#", "javascript:", "mailto:", "tel:")):
             continue
 
         parsed = urlparse(href)
