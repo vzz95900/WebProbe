@@ -40,6 +40,7 @@ class ErrorResponse(BaseModel):
     error_type: str
     message: str | None
     retry_count: int
+    status_code: int | None
 
 
 class StatsResponse(BaseModel):

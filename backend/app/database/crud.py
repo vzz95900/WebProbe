@@ -88,11 +88,41 @@ async def get_pages(
     return list(result.scalars().all())
 
 
-async def get_errors(db: AsyncSession, crawl_id: str) -> list[ErrorModel]:
+async def get_errors(db: AsyncSession, crawl_id: str) -> list[dict]:
     result = await db.execute(
         select(ErrorModel).where(ErrorModel.crawl_id == crawl_id)
     )
-    return list(result.scalars().all())
+    connection_errors = [
+        {
+            "id": e.id,
+            "url": e.url,
+            "error_type": e.error_type,
+            "message": e.message,
+            "retry_count": e.retry_count,
+            "status_code": None,
+        }
+        for e in result.scalars().all()
+    ]
+
+    page_result = await db.execute(
+        select(PageModel).where(
+            PageModel.crawl_id == crawl_id,
+            PageModel.status_code >= 400,
+        )
+    )
+    http_errors = [
+        {
+            "id": p.id,
+            "url": p.url,
+            "error_type": f"{p.status_code}_error",
+            "message": f"HTTP {p.status_code}",
+            "retry_count": 0,
+            "status_code": p.status_code,
+        }
+        for p in page_result.scalars().all()
+    ]
+
+    return connection_errors + http_errors
 
 
 async def get_links(db: AsyncSession, crawl_id: str) -> list[LinkModel]:

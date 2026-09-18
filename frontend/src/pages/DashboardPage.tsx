@@ -258,16 +258,17 @@ export default function DashboardPage() {
           <div className="table-wrapper">
             <div className="table-container">
               <table>
-                <thead><tr><th>URL</th><th>Error Type</th><th>Message</th></tr></thead>
+                <thead><tr><th>URL</th><th>Status</th><th>Error Type</th><th>Message</th></tr></thead>
                 <tbody>
                   {errors.map(e => (
                     <tr key={e.id}>
                       <td><a href={e.url} target="_blank" rel="noopener noreferrer" className="url-link">{e.url}</a></td>
+                      <td><span className={`status-badge ${codeClass(e.status_code)}`}>{e.status_code || 'N/A'}</span></td>
                       <td><span className="status-badge status-4xx">{e.error_type}</span></td>
                       <td style={{ color: 'var(--text-muted)', fontFamily: "'JetBrains Mono', monospace", fontSize: '0.78rem' }}>{e.message || '-'}</td>
                     </tr>
                   ))}
-                  {errors.length === 0 && <tr><td colSpan={3}><div className="empty-state"><div className="empty-state-icon">&#10003;</div><h3>No errors</h3></div></td></tr>}
+                  {errors.length === 0 && <tr><td colSpan={4}><div className="empty-state"><div className="empty-state-icon">&#10003;</div><h3>No errors</h3></div></td></tr>}
                 </tbody>
               </table>
             </div>

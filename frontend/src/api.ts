@@ -39,6 +39,7 @@ export interface CrawlError {
   error_type: string;
   message: string | null;
   retry_count: number;
+  status_code: number | null;
 }
 
 export interface CrawlStats {
