@@ -113,7 +113,7 @@ async def get_comprehensive_stats(db: AsyncSession, crawl_id: str) -> dict:
     return {
         **base_stats,
         "broken_links": broken,
-        "redirects": redirects,
+        "redirects_list": redirects,
         "slow_pages": slow,
         "deep_pages": deep,
     }
